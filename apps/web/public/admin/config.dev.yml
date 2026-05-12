@@ -1,0 +1,72 @@
+backend:
+  name: github
+  repo: oortsky/mico
+  branch: main
+
+site_url: https://mico-web.vercel.app
+
+publish_mode: editorial_workflow
+media_folder: "apps/web/src/assets"
+public_folder: "../../assets"
+
+collections:
+  - name: "blog"
+    label: "Blog"
+    folder: "apps/web/src/content/blog"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Description", name: "description", widget: "text" }
+      - {
+          label: "Publish date",
+          name: "pubDate",
+          widget: "datetime",
+          default: "{{now}}"
+        }
+      - {
+          label: "Hero image",
+          name: "heroImage",
+          widget: "image",
+          required: false
+        }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  - name: "legal"
+    label: "Legal"
+    files:
+      - label: "Privacy Policy"
+        name: "privacy"
+        file: "apps/web/src/content/legal/privacy.md"
+        fields:
+          - {
+              label: "Title",
+              name: "title",
+              widget: "string",
+              default: "Privacy Policy"
+            }
+          - {
+              label: "Date",
+              name: "date",
+              widget: "datetime",
+              default: "{{now}}"
+            }
+          - { label: "Body", name: "body", widget: "markdown" }
+
+      - label: "Terms & Conditions"
+        name: "terms"
+        file: "apps/web/src/content/legal/terms.md"
+        fields:
+          - {
+              label: "Title",
+              name: "title",
+              widget: "string",
+              default: "Terms & Conditions"
+            }
+          - {
+              label: "Date",
+              name: "date",
+              widget: "datetime",
+              default: "{{now}}"
+            }
+          - { label: "Body", name: "body", widget: "markdown" }

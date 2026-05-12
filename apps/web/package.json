@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "cp public/admin/config.prod.yml public/admin/config.yml && astro build",
+    "develop": "cp public/admin/config.dev.yml public/admin/config.yml && vercel dev",
     "preview": "astro preview",
     "astro": "astro"
   },
@@ -16,7 +17,10 @@
     "@astrojs/mdx": "^5.0.4",
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.7.2",
+    "@astrojs/vercel": "^10.0.6",
     "astro": "^6.3.1",
-    "sharp": "^0.34.3"
+    "hono": "^4.12.18",
+    "sharp": "^0.34.3",
+    "zod": "^4.4.3"
   }
 }

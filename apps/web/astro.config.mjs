@@ -2,6 +2,7 @@
 
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
+import vercel from "@astrojs/vercel";
 import {
   defineConfig,
   fontProviders,
@@ -38,5 +39,6 @@ export default defineConfig({
   ],
   image: {
     service: passthroughImageService()
-  }
+  },
+  adapter: vercel()
 });
