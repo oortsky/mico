@@ -40,5 +40,6 @@ export default defineConfig({
   image: {
     service: passthroughImageService()
   },
-  adapter: vercel()
+  adapter: vercel(),
+  output: "server"
 });
