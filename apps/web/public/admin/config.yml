@@ -3,7 +3,7 @@ backend:
   repo: oortsky/mico
   branch: main
   base_url: https://mico-web.vercel.app/
-  auth_endpoint: api/auth/github
+  auth_endpoint: api/auth
 
 site_url: https://mico-web.vercel.app
 

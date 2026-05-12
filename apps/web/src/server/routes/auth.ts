@@ -1,56 +1,33 @@
 import { Hono } from "hono";
 
-import { env } from "../config/env";
-
 const auth = new Hono();
 
-auth.get("/auth/github", async (c) => {
-  const state = crypto.randomUUID();
+auth.get("/auth/github", c => {
+  const clientId = process.env.GITHUB_CLIENT_ID!;
+  const redirectUri = process.env.GITHUB_REDIRECT_URI!;
 
-  const params = new URLSearchParams({
-    client_id: env.githubClientId,
-    redirect_uri: env.githubRedirectUri,
-    scope: "read:user user:email",
-    state,
-  });
+  const authURL = new URL("https://github.com/login/oauth/authorize");
 
-  c.header(
-    "Set-Cookie",
-    [
-      `github_oauth_state=${state}`,
-      "Path=/",
-      "HttpOnly",
-      "Secure",
-      "SameSite=Lax",
-      "Max-Age=600",
-    ].join("; ")
-  );
+  authURL.searchParams.set("client_id", clientId);
+  authURL.searchParams.set("redirect_uri", redirectUri);
+  authURL.searchParams.set("scope", "repo user");
 
-  return c.redirect(
-    `https://github.com/login/oauth/authorize?${params.toString()}`
-  );
+  return c.redirect(authURL.toString());
 });
 
-auth.get("/auth/callback/github", async (c) => {
+auth.get("/auth/callback/github", async c => {
+  const clientId = process.env.GITHUB_CLIENT_ID!;
+  const clientSecret = process.env.GITHUB_CLIENT_SECRET!;
+  const redirectUri = process.env.GITHUB_REDIRECT_URI!;
+
   const code = c.req.query("code");
-  const state = c.req.query("state");
 
-  const cookie = c.req.header("cookie") || "";
-
-  const savedState = cookie
-    .split("; ")
-    .find((v) => v.startsWith("github_oauth_state="))
-    ?.split("=")[1];
-
-  if (!code || !state || state !== savedState) {
+  if (!code) {
     return c.html(`
       <script>
         window.opener.postMessage(
-          {
-            type: "github:error",
-            error: "Invalid OAuth state"
-          },
-          "${env.appOrigin}"
+          { error: "Missing code" },
+          "*"
         );
 
         window.close();
@@ -65,60 +42,98 @@ auth.get("/auth/callback/github", async (c) => {
         method: "POST",
         headers: {
           Accept: "application/json",
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          client_id: env.githubClientId,
-          client_secret: env.githubClientSecret,
+          client_id: clientId,
+          client_secret: clientSecret,
           code,
-          redirect_uri: env.githubRedirectUri,
-        }),
+          redirect_uri: redirectUri
+        })
       }
     );
 
     const tokenData = await tokenResponse.json();
 
-    if (!tokenData.access_token) {
+    const accessToken = tokenData.access_token;
+
+    if (!accessToken) {
       throw new Error("Missing access token");
     }
 
+    const content = JSON.stringify({
+      token: accessToken,
+      provider: "github"
+    });
+
+    const message = JSON.stringify(`authorization:github:success:${content}`);
+
     return c.html(`
-      <script>
-        window.opener.postMessage(
-          {
-            type: "github:success",
-            provider: "github",
-            token: ${JSON.stringify(tokenData.access_token)}
-          },
-          "${env.appOrigin}"
-        );
+      <html>
+        <body>
+          <script>
+            (function() {
+              function receiveMessage(event) {
+                console.log("receiveMessage", event);
 
-        window.close();
+                window.opener.postMessage(
+                  ${message},
+                  event.origin
+                );
 
-        setTimeout(() => {
-          document.body.innerHTML =
-            "Authentication complete. You can close this window.";
-        }, 1000);
-      </script>
+                setTimeout(() => {
+                  window.close();
+                }, 300);
+              }
+
+              window.addEventListener(
+                "message",
+                receiveMessage,
+                false
+              );
+
+              window.opener.postMessage(
+                "authorizing:github",
+                "*"
+              );
+            })();
+          </script>
+        </body>
+      </html>
     `);
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "OAuth failed";
+    const message = JSON.stringify("authorization:github:error:OAuth failed");
 
     return c.html(`
-      <script>
-        window.opener.postMessage(
-          {
-            type: "github:error",
-            error: ${JSON.stringify(message)}
-          },
-          "${env.appOrigin}"
-        );
+      <html>
+        <body>
+          <script>
+            (function() {
+              function receiveMessage(event) {
+                window.opener.postMessage(
+                  ${message},
+                  event.origin
+                );
 
-        window.close();
-      </script>
+                setTimeout(() => {
+                  window.close();
+                }, 300);
+              }
+
+              window.addEventListener(
+                "message",
+                receiveMessage,
+                false
+              );
+
+              window.opener.postMessage(
+                "authorizing:github",
+                "*"
+              );
+            })();
+          </script>
+        </body>
+      </html>
     `);
   }
 });
