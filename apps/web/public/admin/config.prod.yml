@@ -30,7 +30,6 @@ collections:
           label: "Hero image",
           name: "heroImage",
           widget: "image",
-          required: false
         }
       - { label: "Body", name: "body", widget: "markdown" }
 
