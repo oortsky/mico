@@ -1,0 +1,34 @@
+# dependencies
+node_modules
+.pnpm-store
+
+# env
+.env
+.env.local
+.env.*.local
+
+# build
+dist
+build
+coverage
+
+# astro
+.astro
+
+# next
+.next
+
+# turbo
+.turbo
+
+# logs
+*.log
+
+# vscode
+.vscode
+
+# typescript
+*.tsbuildinfo
+
+# OS
+.DS_Store
